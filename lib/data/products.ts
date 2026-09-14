@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { escapePostgrestValue } from '@/lib/utils';
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
 const PRODUCT_SELECT = `
   id, name, slug, short_description, description, how_to_use, benefits, faq,
@@ -170,8 +170,11 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
   return attachRatings(supabase, data);
 }
 
-export async function getCategories() {
+export async function getCategories(): Promise<Category[]> {
   const supabase = createClient();
-  const { data } = await supabase.from('categories').select('id, name, slug, description').order('position');
+  const { data } = await supabase
+    .from('categories')
+    .select('id, name, slug, description, position')
+    .order('position');
   return data ?? [];
 }
