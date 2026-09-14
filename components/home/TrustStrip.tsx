@@ -1,7 +1,7 @@
-import { ShieldCheck, Truck, RotateCcw, Headphones, Leaf, Package } from 'lucide-react';
+import { ShieldCheck, Truck, RotateCcw, Headphones, Leaf, Package, type LucideIcon } from 'lucide-react';
 import type { SiteSettings } from '@/types';
 
-const ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+const ICONS: Record<string, LucideIcon> = {
   shield: ShieldCheck,
   truck: Truck,
   returns: RotateCcw,
