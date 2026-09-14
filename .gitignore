@@ -1,0 +1,54 @@
+# --- Environment / secrets ---------------------------------------------
+# Never commit real credentials. Only .env.example is allowed in git.
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Dependencies ---------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+
+# --- Next.js build output --------------------------------------------------
+.next/
+out/
+build/
+dist/
+
+# --- Vercel ------------------------------------------------------------
+.vercel/
+
+# --- Testing / coverage --------------------------------------------------
+coverage/
+
+# --- Logs -----------------------------------------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# --- OS / editor junk -------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- TypeScript build info --------------------------------------------
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Supabase local dev --------------------------------------------------
+.supabase/
+
+# --- Anything explicitly marked local/secret ------------------------------
+*.local
+*.secret
+*.pem
+*.key
+!public/**/*.key
