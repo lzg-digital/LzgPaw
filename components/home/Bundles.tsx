@@ -3,7 +3,7 @@
 import type { Bundle } from '@/types';
 import { useCart } from '@/lib/cart-context';
 import { trackEvent } from '@/lib/analytics';
-import { bundleComparePrice } from '@/lib/data/bundles';
+import { bundleComparePrice } from '@/lib/data/bundle-utils';
 import { formatPrice, savingsAmount, savingsPercent, cn } from '@/lib/utils';
 import { ProductBadge } from '@/components/ui/Badge';
 
