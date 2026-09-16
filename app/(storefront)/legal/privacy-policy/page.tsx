@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 
 export default async function PrivacyPolicyPage() {
   const settings = await getSiteSettings();
-  const supportEmail = settings.support_email || '[support email]';
+  const supportEmail = settings.support_email || 'Ricopack0117@gmail.com';
 
   return (
     <div className="container-content max-w-3xl py-14 prose-legal">
       <h1 className="font-serif text-3xl text-ink">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-ink/50">Last updated: [date] — replace bracketed placeholders before publishing.</p>
+      <p className="mt-2 text-sm text-ink/50">Last updated: September 16, 2026.</p>
 
       <Section title="Who we are">
         <p>
@@ -21,7 +21,7 @@ export default async function PrivacyPolicyPage() {
           <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a>.
         </p>
         <p className="mt-2 text-ink/60">
-          [Registered business name, address, and business registration number, if applicable, go here.]
+          LzgPaw is currently operated as an unregistered online brand. We do not describe LzgPaw as a registered company or business. For privacy questions, contact Ricopack0117@gmail.com.
         </p>
       </Section>
 
@@ -30,7 +30,7 @@ export default async function PrivacyPolicyPage() {
           <li>Order information: name, email, phone, shipping/billing address, and what you purchased — collected when you check out.</li>
           <li>Account information, if you create one.</li>
           <li>Anonymous usage analytics (page views, add-to-cart, purchases) — only after you accept analytics cookies. See "Cookies" below.</li>
-          <li>Payment is processed by PayPesa; we do not receive or store your full card number.</li>
+          <li>Payment is processed through DPO Pay by Network on its hosted payment environment; LzgPaw does not receive or store full card numbers.</li>
         </ul>
       </Section>
 
@@ -48,7 +48,7 @@ export default async function PrivacyPolicyPage() {
         <ul className="list-disc pl-5">
           <li><strong>Supabase</strong> — database and file storage.</li>
           <li><strong>Vercel</strong> — website hosting.</li>
-          <li><strong>PayPesa</strong> — payment processing.</li>
+          <li><strong>DPO Pay by Network</strong> — payment processing.</li>
           <li>Shipping carriers, to deliver your order.</li>
         </ul>
         <p className="mt-2">We do not sell personal data.</p>
@@ -79,8 +79,7 @@ export default async function PrivacyPolicyPage() {
 
       <Section title="International transfers">
         <p>
-          Our service providers may process data in countries other than your own. [Add specifics once your Supabase
-          project region and any other processing locations are finalized.]
+          Our service providers may process data in countries other than your own. The exact locations depend on the regions selected for our hosting and database services. Where required, we use appropriate safeguards for international data transfers.
         </p>
       </Section>
 

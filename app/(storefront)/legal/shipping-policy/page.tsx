@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function ShippingPolicyPage() {
   const settings = await getSiteSettings();
-  const supportEmail = settings.support_email || '[support email]';
+  const supportEmail = settings.support_email || 'Ricopack0117@gmail.com';
 
   return (
     <div className="container-content max-w-3xl py-14">
@@ -26,19 +26,11 @@ export default async function ShippingPolicyPage() {
       </Section>
 
       <Section title="Processing & delivery times">
-        <p>
-          [State your actual order processing time (e.g. "orders ship within 1–2 business days") and estimated
-          delivery windows per region once confirmed with your fulfillment/supplier setup — these figures should
-          never be guessed, since missed delivery promises are a common source of chargebacks and complaints.]
-        </p>
+        <p>Orders are processed after payment is successfully verified. Delivery timing depends on destination, carrier, inventory, and fulfillment conditions. Where an estimated delivery window is available, it will be communicated during or after checkout.</p>
       </Section>
 
       <Section title="International shipping & customs">
-        <p>
-          We ship internationally. [State clearly whether the price shown includes any import duties/taxes (DDP) or
-          whether the customer may be billed separately by customs on delivery (DDU/DAP) — see
-          docs/COMPLIANCE.md §4 for why this needs to be explicit.]
-        </p>
+        <p>We may ship internationally. Import duties, customs charges, and destination taxes may apply depending on the destination and shipment terms. Any such charges that are not explicitly included at checkout may be collected by the relevant customs authority or carrier.</p>
       </Section>
 
       <Section title="Order tracking">

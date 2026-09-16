@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Deliberately narrow: fulfillment_status + tracking only. There is no
   // field here for payment_status — that only ever changes via the
-  // signature-verified webhook (see app/api/webhooks/paypesa/route.ts).
+  // signature-verified webhook (see app/api/webhooks/dpo/route.ts).
   // This isn't an oversight; an admin fat-fingering "paid" on an unpaid
   // order is exactly the failure mode section 17/20 of the build spec
   // guards against.

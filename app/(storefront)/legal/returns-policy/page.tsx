@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default async function ReturnsPolicyPage() {
   const settings = await getSiteSettings();
-  const supportEmail = settings.support_email || '[support email]';
+  const supportEmail = settings.support_email || 'Ricopack0117@gmail.com';
   const windowDays = settings.return_window_days;
 
   return (
@@ -19,19 +19,12 @@ export default async function ReturnsPolicyPage() {
         {windowDays != null ? (
           <p>You can request a return within {windowDays} days of delivery.</p>
         ) : (
-          <p className="text-clay-700">
-            [No return window has been configured yet — set "Return window (days)" in Admin → Settings. Note: EU
-            customers have a legal 14-day right of withdrawal regardless of this setting — see
-            docs/COMPLIANCE.md §3.]
-          </p>
+          <p>We have not published a fixed voluntary return window yet. Any mandatory return, cancellation, withdrawal, or refund rights that apply to your purchase under local law remain unaffected.</p>
         )}
       </Section>
 
       <Section title="Eligibility">
-        <p>
-          [State your actual condition requirements — e.g. unused, original packaging — once decided. Be specific
-          and don't promise more than you can honor.]
-        </p>
+        <p>Items returned under an applicable legal or published return right should be in the condition required by that right. We may request reasonable evidence of the order and the condition of the item.</p>
       </Section>
 
       <Section title="How to start a return">
@@ -42,11 +35,7 @@ export default async function ReturnsPolicyPage() {
       </Section>
 
       <Section title="Refunds">
-        <p>
-          Once your return is received and inspected, we'll notify you and process your refund to your original
-          payment method. [State your actual refund timeline once confirmed with your payment provider's
-          processing times.]
-        </p>
+        <p>Once an eligible return is received and reviewed, any approved refund will be sent to the original payment method where supported by the payment provider. Processing time can vary by provider and bank.</p>
       </Section>
 
       <Section title="Damaged or incorrect items">

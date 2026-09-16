@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 
 export default async function TermsPage() {
   const settings = await getSiteSettings();
-  const supportEmail = settings.support_email || '[support email]';
+  const supportEmail = settings.support_email || 'Ricopack0117@gmail.com';
 
   return (
     <div className="container-content max-w-3xl py-14">
       <h1 className="font-serif text-3xl text-ink">Terms & Conditions</h1>
-      <p className="mt-2 text-sm text-ink/50">Last updated: [date] — have this reviewed by a lawyer before publishing.</p>
+      <p className="mt-2 text-sm text-ink/50">Last updated: September 16, 2026.</p>
 
       <Section title="Overview">
         <p>
@@ -32,7 +32,7 @@ export default async function TermsPage() {
 
       <Section title="Payment">
         <p>
-          Payment is processed by PayPesa. Your order is confirmed only once payment has been verified — see our{' '}
+          Payment is processed by DPO Pay by Network on its hosted payment environment. Your order is confirmed only once payment has been verified — see our{' '}
           <a href="/legal/shipping-policy" className="underline">Shipping Policy</a> for what happens next.
         </p>
       </Section>
@@ -61,13 +61,12 @@ export default async function TermsPage() {
 
       <Section title="Limitation of liability">
         <p>
-          [This section needs jurisdiction-specific legal language — a lawyer should draft the limitation of
-          liability and disclaimer clauses appropriate for the countries you sell into.]
+          Nothing in these Terms excludes or limits a right, remedy, warranty, or liability that cannot lawfully be excluded or limited. To the extent permitted by applicable law, LzgPaw is responsible only for losses directly caused by its breach of these Terms.
         </p>
       </Section>
 
       <Section title="Governing law">
-        <p>[State the governing law and jurisdiction for these Terms once finalized with legal counsel.]</p>
+        <p>These Terms are governed by the mandatory consumer and commercial laws that apply to your purchase and use of the site. Any specific governing-law and jurisdiction clause will be added when the store establishes its applicable legal entity and launch markets.</p>
       </Section>
 
       <Section title="Contact">
