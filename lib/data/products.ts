@@ -172,6 +172,6 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
 
 export async function getCategories() {
   const supabase = createClient();
-  const { data } = await supabase.from('categories').select('id, name, slug, description').order('position');
+  const { data } = await supabase.from('categories').select('id, name, slug, description, position').order('position');
   return data ?? [];
 }
