@@ -34,7 +34,7 @@ what's a business/legal decision you still need to make.
 
 **What you still need to decide/do:**
 - Pick a Supabase project **region** deliberately (data residency). If you have EU customers, hosting in the EU reduces cross-border-transfer questions; if you keep US hosting, your Privacy Policy needs a cross-border-transfer clause.
-- Add a **Data Processing Addendum** reference to your Privacy Policy naming your sub-processors: Supabase (database/storage), Vercel (hosting), PayPesa (payments), and any email/analytics tool you add later.
+- Add a **Data Processing Addendum** reference to your Privacy Policy naming your sub-processors: Supabase (database/storage), Vercel (hosting), DPO Pay by Network (payments), and any email/analytics tool you add later.
 - Decide how you'll honor a "delete my data" request (a manual admin process is fine at small scale — document the process).
 - If you ever target children's products/marketing, COPPA (US) and similar child-privacy laws add extra rules — out of scope for a pet-hair-remover store today, but worth remembering if the catalog grows.
 
@@ -46,7 +46,7 @@ Because LzgPaw takes card payments, **PCI DSS** (Payment Card Industry Data
 Security Standard) applies. The single biggest thing you can do to keep this
 simple: **never let LzgPaw's own servers touch raw card numbers.**
 
-- The `services/payments/PaymentProvider` abstraction (see `services/payments/`) is built so checkout redirects to, or tokenizes through, PayPesa's own hosted payment flow — the card PAN should never hit `/api/checkout` or be stored in `orders`/`payment_events`. Confirm PayPesa's integration supports a hosted/tokenized flow (most mobile-money-first African PSPs do); if PayPesa ever asks you to post raw card fields to your own backend, that pulls you into a much heavier PCI SAQ tier — avoid it.
+- The `services/payments/PaymentProvider` abstraction (see `services/payments/`) is built so checkout redirects to, or tokenizes through, DPO Pay by Network's own hosted payment flow — the card PAN should never hit `/api/checkout` or be stored in `orders`/`payment_events`. Confirm DPO Pay by Network's integration supports a hosted/tokenized flow (most mobile-money-first African PSPs do); if DPO Pay by Network ever asks you to post raw card fields to your own backend, that pulls you into a much heavier PCI SAQ tier — avoid it.
 - `payment_events.raw_payload` stores the *webhook* payload for audit/idempotency, not card data — do not extend it to store PANs, CVVs, or full card numbers under any circumstance.
 - Security headers, TLS-only (HSTS), and no `NEXT_PUBLIC_` secret leakage (§21–24 of the original build spec) are already part of `next.config.js` / `.env.example` and reduce PCI scope further.
 
@@ -107,8 +107,8 @@ area for ecommerce.
 
 ## 7. Fraud, sanctions & anti-money-laundering
 
-- International shipping means occasionally screening against **sanctioned countries/regions** and denied-party lists is a real consideration once volume grows — most payment processors (PayPesa included) do some of this on their end as part of merchant onboarding, but don't assume it covers your shipping carrier too.
-- Keep `internal_notes` on `orders` for flagging anything that looks like card testing or fraud (many small orders, mismatched billing/shipping country, etc.) — there's no automated fraud scoring in this build; add one (or use PayPesa's, if offered) before scaling paid ad traffic, which is the most common vector for card-testing fraud.
+- International shipping means occasionally screening against **sanctioned countries/regions** and denied-party lists is a real consideration once volume grows — most payment processors (DPO Pay by Network included) do some of this on their end as part of merchant onboarding, but don't assume it covers your shipping carrier too.
+- Keep `internal_notes` on `orders` for flagging anything that looks like card testing or fraud (many small orders, mismatched billing/shipping country, etc.) — there's no automated fraud scoring in this build; add one (or use DPO Pay by Network's, if offered) before scaling paid ad traffic, which is the most common vector for card-testing fraud.
 
 ---
 
@@ -127,7 +127,7 @@ Practically: know *before* an incident who you'd contact (e.g., Supabase's statu
 | Requirement | Status |
 |---|---|
 | RLS locking down orders/customers/payment data | ✅ implemented (`database/schema.sql`) |
-| No card data touching LzgPaw's own servers | ✅ enforced by the payment abstraction — confirm PayPesa's actual flow matches |
+| No card data touching LzgPaw's own servers | ✅ enforced by the payment abstraction — confirm DPO Pay by Network's actual flow matches |
 | Cookie/analytics consent gate | ✅ implemented this pass |
 | Security headers, HSTS, no leaked secrets | ✅ implemented (`next.config.js`, `.gitignore`, `.env.example`) |
 | Accessible markup | ✅ ongoing discipline as pages are built |

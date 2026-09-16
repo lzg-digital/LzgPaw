@@ -2,7 +2,7 @@
  * Payment provider abstraction.
  *
  * Checkout (`app/api/checkout/route.ts`) and the webhook handler
- * (`app/api/webhooks/paypesa/route.ts`) depend ONLY on this interface —
+ * (`app/api/webhooks/dpo/route.ts`) depend ONLY on this interface —
  * never on a specific provider's request/response shape. That means
  * swapping or adding a payment provider later never touches order logic.
  */

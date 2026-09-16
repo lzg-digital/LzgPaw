@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Bundle } from '@/types';
-import { bundleComparePrice } from '@/lib/bundle-pricing';
+import { bundleComparePrice } from '@/lib/data/bundles';
 import { formatPrice, savingsPercent } from '@/lib/utils';
 
 export function BundleOffer({ bundles }: { bundles: Bundle[] }) {

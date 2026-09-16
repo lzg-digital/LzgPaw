@@ -24,6 +24,14 @@ export async function getActiveBundles(): Promise<Bundle[]> {
   return data as unknown as Bundle[];
 }
 
+/** Falls back to summing item (price × quantity) when the admin hasn't set
+ * an explicit compare_at_price on the bundle — never invents a number. */
+export function bundleComparePrice(bundle: Bundle): number | null {
+  if (bundle.compare_at_price != null) return bundle.compare_at_price;
+  if (!bundle.items || bundle.items.length === 0) return null;
+  return bundle.items.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.quantity, 0);
+}
+
 /** Bundles that include a given product — used on the product page's
  * "Bundle & Save" prompt. */
 export async function getBundlesForProduct(productId: string): Promise<Bundle[]> {
