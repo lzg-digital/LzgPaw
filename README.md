@@ -7,13 +7,13 @@ reviews, orders — is database-driven; nothing is hardcoded into the frontend.
 This README is the map. For deeper detail on two specific topics, see:
 - `docs/COMPLIANCE.md` — international data-protection, PCI, tax, and
   consumer-law considerations.
-- Inline comments in `services/payments/DPO Pay by NetworkProvider.ts` — exactly what
-  is and isn't confirmed against DPO Pay by Network's real API.
+- Inline comments in `services/payments/PayPesaProvider.ts` — exactly what
+  is and isn't confirmed against PayPesa's real API.
 
 ## Tech stack
 
 Next.js 14 (App Router) · TypeScript · Supabase (Postgres + Auth + Storage) ·
-Tailwind CSS · Vercel · DPO Pay by Network (payment abstraction)
+Tailwind CSS · Vercel · PayPesa (payment abstraction)
 
 ## Design system
 
@@ -97,24 +97,29 @@ and matching the framework beats matching a folder name.
 
 ## Payments (DPO Pay by Network)
 
-`services/payments/PaymentProvider.ts` defines the interface every other
-part of the app depends on. `DPO Pay by NetworkProvider.ts` implements it, but — flagged
-explicitly in that file — DPO Pay by Network's official Merchant API documentation
-wasn't available to build against directly, so every endpoint path, field
-name, and signature scheme in that file is marked `// CONFIRM:` and must be
-checked against DPO Pay by Network's real docs/dashboard before going live. Until then:
+The storefront uses DPO Pay by Network's hosted checkout. DPO's current API documentation specifies `createToken` over XML on `/API/v6/`, then redirecting the customer to DPO's hosted payment page. On return, the server calls `verifyToken` and only then changes the order to `paid`. Card details never touch this application.
 
-- `createPayment` throws a clear configuration error (not a fake success) if
-  `DPO_API_BASE_URL` etc. aren't set — checkout will surface "online
-  payment is not yet configured" rather than pretending to work.
-- `verifyWebhook` fails closed (`valid: false`) on anything it can't verify
-  — a webhook is never trusted by default.
+Required server environment variables:
 
-Orders are created in `pending_payment` at checkout and only ever flip to
-`paid` inside `app/api/webhooks/dpo/route.ts`, after signature
-verification and an amount/currency cross-check against what we recorded at
-checkout time. Nothing the browser says about payment status is trusted
-anywhere in this codebase.
+- `DPO_COMPANY_TOKEN` — secret CompanyToken from the DPO Merchant Portal.
+- `DPO_SERVICE_TYPE` — the service type ID assigned by DPO for your merchant account.
+- `DPO_API_URL` — defaults to the documented v6 endpoint.
+- `DPO_HOSTED_CHECKOUT_URL` — defaults to the documented hosted page.
+
+The DPO account itself must be approved before production credentials can be used. DPO's onboarding documentation says merchants need business details, registration documents, bank information and owner/signatory identity documents.
+
+Security properties:
+
+- Prices and stock are resolved server-side from Supabase.
+- No card numbers/CVV are stored by LzgPaw.
+- DPO hosted checkout keeps sensitive card data off our servers.
+- Payment status is never trusted from the browser; the server verifies the DPO transaction and cross-checks amount/currency before marking an order paid.
+- Duplicate order references are blocked with `CompanyRefUnique`.
+- Rate limits protect checkout and payment confirmation endpoints.
+- Secrets are server-only environment variables.
+
+For testing, DPO publishes sandbox credentials and test card details; never put production credentials in the repository.
+
 
 ## Admin dashboard
 
@@ -181,9 +186,9 @@ at a glance, plus:
 - **The payment return URL is never derived from the request** (i.e. never
   `request.nextUrl.origin` / the `Host` header) — only from the
   server-configured `NEXT_PUBLIC_SITE_URL`, so a spoofed Host header can't
-  redirect customers or DPO Pay by Network's webhook callback to another domain.
+  redirect customers or PayPesa's webhook callback to another domain.
 - **Secrets hygiene**: `.gitignore` blocks every `.env*` variant except
-  `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` and all `DPO_*` secrets are
+  `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` and all `PAYPESA_*` secrets are
   read only in server-only modules (enforced by the `server-only` package).
 
 **Before your first deploy**, verify secrets actually won't be committed:
@@ -229,7 +234,7 @@ checkout, admin — as part of setup, not optional polish.
 Being upfront about what this scaffold does *not* do yet, rather than
 papering over it:
 
-- **DPO Pay by Network integration is unconfirmed** — see above. This is the single
+- **PayPesa integration is unconfirmed** — see above. This is the single
   most important thing to resolve before accepting real payments.
 - **Tax calculation isn't wired up** — `orders.tax_amount` exists but is
   always `0` today. Needs an accountant's input before automating (see
