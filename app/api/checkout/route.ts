@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
   // ---------------------------------------------------------------------
   // 4. Find-or-create the customer, then create the order + order_items in
   //    `pending_payment`. Nothing is marked paid here — see
-  //    app/api/webhooks/dpo/route.ts for the only code path allowed to
+  //    the DPO verifyToken flow on the confirmation page for the only code path allowed to
   //    do that.
   // ---------------------------------------------------------------------
   const normalizedEmail = input.customer_email.toLowerCase();
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       total_amount: totalAmount,
       payment_status: 'pending_payment',
       fulfillment_status: 'unfulfilled',
-      payment_provider: 'dpo',
+      payment_provider: 'dpo_pay',
       customer_notes: input.customer_notes,
     })
     .select('id, order_number')
@@ -256,15 +256,13 @@ export async function POST(request: NextRequest) {
   }
 
   // ---------------------------------------------------------------------
-  // 5. Hand off to the payment provider. See services/payments/DPOProvider.ts
-  //    for exactly what is and isn't confirmed against DPO Pay's real API yet.
+  // 5. Hand off to the payment provider. See services/payments/DPOPayProvider.ts
   //
   //    SECURITY: this must be a fixed, server-configured origin — never
   //    derived from the incoming request (e.g. `request.nextUrl.origin` /
   //    the Host header), which a client can set to an arbitrary value.
   //    Trusting it here would let someone inject an attacker-controlled
   //    domain into both the customer's post-payment redirect and the
-  //    webhook callback URL sent to DPO Pay.
   // ---------------------------------------------------------------------
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) {

@@ -90,9 +90,23 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container-content grid gap-10 py-12 lg:grid-cols-[1fr_380px] lg:py-16">
+    <div className="container-content py-8 sm:py-12 lg:py-16">
+      <div className="mx-auto mb-8 max-w-3xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-forest/70">Secure checkout</p>
+        <h1 className="mt-2 font-serif text-3xl text-ink sm:text-4xl">Almost there.</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/65">
+          Enter your delivery details, then you'll be sent to DPO Pay's secure hosted checkout to complete payment.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-forest">
+          {['Secure DPO Pay checkout', 'Visa & Mastercard', 'Card details never stored here'].map((item) => (
+            <span key={item} className="rounded-full border border-forest/10 bg-white px-3 py-1.5 shadow-sm">{item}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_380px]">
       <form onSubmit={onSubmit} className="flex flex-col gap-8">
-        <section>
+        <section className="rounded-3xl border border-forest/10 bg-white p-5 shadow-card sm:p-7">
           <h2 className="font-serif text-xl text-ink">Contact</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Full name" required value={form.customer_name} onChange={(v) => update('customer_name', v)} />
@@ -108,7 +122,7 @@ export default function CheckoutPage() {
           </div>
         </section>
 
-        <section>
+        <section className="rounded-3xl border border-forest/10 bg-white p-5 shadow-card sm:p-7">
           <h2 className="font-serif text-xl text-ink">Shipping address</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm text-ink sm:col-span-2">
@@ -144,7 +158,7 @@ export default function CheckoutPage() {
           </div>
         </section>
 
-        <section>
+        <section className="rounded-3xl border border-forest/10 bg-white p-5 shadow-card sm:p-7">
           <h2 className="font-serif text-xl text-ink">Discount code</h2>
           <div className="mt-4">
             <Field label="Code (optional)" value={form.discount_code} onChange={(v) => update('discount_code', v)} />
@@ -162,7 +176,7 @@ export default function CheckoutPage() {
         </button>
       </form>
 
-      <aside className="h-fit rounded-2xl bg-sage/40 p-6">
+      <aside className="h-fit rounded-3xl border border-forest/10 bg-sage/35 p-6 shadow-card lg:sticky lg:top-28">
         <h2 className="font-serif text-lg text-ink">Order Summary</h2>
         <ul className="mt-4 flex flex-col gap-3">
           {lines.map((line) => (
@@ -179,9 +193,13 @@ export default function CheckoutPage() {
             <span className="text-ink/70">Subtotal</span>
             <span className="font-medium text-ink">{formatPrice(subtotal)}</span>
           </div>
-          <p className="mt-2 text-xs text-ink/60">Shipping and any discount are calculated on the next step.</p>
+          <p className="mt-2 text-xs text-ink/60">Final shipping, discounts and total are calculated securely on the server before DPO payment begins.</p>
+        </div>
+        <div className="mt-5 rounded-2xl bg-white/75 p-4 text-xs leading-5 text-ink/65">
+          <strong className="text-ink">Your payment is protected.</strong> DPO hosts the payment page, so LzgPaw does not collect or store your card number or CVV.
         </div>
       </aside>
+      </div>
     </div>
   );
 }

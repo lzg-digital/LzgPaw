@@ -9,6 +9,7 @@
 
   body {
     @apply bg-cream text-ink antialiased;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4 {

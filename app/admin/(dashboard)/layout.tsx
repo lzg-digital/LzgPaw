@@ -40,7 +40,22 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
           <AdminSignOutButton />
         </div>
       </aside>
-      <main className="flex-1 p-6 sm:p-10">{children}</main>
+      <main className="min-w-0 flex-1 p-4 sm:p-10">
+        <div className="mb-5 overflow-x-auto sm:hidden" aria-label="Admin navigation">
+          <nav className="flex min-w-max gap-2 rounded-2xl border border-forest/10 bg-white/70 p-2 shadow-sm">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold text-ink transition hover:bg-sage hover:text-forest"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }

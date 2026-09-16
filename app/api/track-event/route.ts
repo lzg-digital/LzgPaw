@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { isRateLimited, recordHit, getClientIp } from '@/lib/rate-limit';
 
 // Kept in sync with the `event_type` values the storefront actually emits
 // (lib/analytics.ts) and with docs/COMPLIANCE.md §5.
@@ -24,11 +23,6 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  if (await isRateLimited('analytics', ip, 120, 10)) {
-    return NextResponse.json({ error: 'Too many events' }, { status: 429 });
-  }
-  await recordHit('analytics', ip);
   let json: unknown;
   try {
     json = await request.json();
