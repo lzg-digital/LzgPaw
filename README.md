@@ -1,19 +1,26 @@
 # LzgPaw
 
-A production-oriented Next.js storefront for LzgPaw, an international pet-care
-brand. Everything a customer or admin sees — products, prices, bundles,
+> **Deployment:** This is a full-stack **Next.js** application. Deploy it on **Vercel** (or another Node-capable Next.js host), not GitHub Pages. GitHub Pages will render the repository README/static files and cannot run the server-side API routes required by Supabase, admin authentication, and DPO Pay.
+
+## Quick deploy
+1. Push this project folder to GitHub with `package.json` at the repository root.
+2. Import the repository into Vercel and keep **Framework: Next.js** and **Root Directory: `./`**.
+3. Add the variables from `.env.example` in Vercel Project Settings → Environment Variables.
+4. Deploy, then test `/`, `/shop`, `/cart`, `/checkout`, and `/admin/login`.
+5. Do not put DPO Company Token or Supabase service-role key in client code or Git.
+
 reviews, orders — is database-driven; nothing is hardcoded into the frontend.
 
 This README is the map. For deeper detail on two specific topics, see:
 - `docs/COMPLIANCE.md` — international data-protection, PCI, tax, and
   consumer-law considerations.
-- Inline comments in `services/payments/PayPesaProvider.ts` — exactly what
-  is and isn't confirmed against PayPesa's real API.
+- Inline comments in `services/payments/DPOPayProvider.ts` — exactly what
+  is and isn't confirmed against DPO Pay's documented API flow; live/sandbox credentials are still required.
 
 ## Tech stack
 
 Next.js 14 (App Router) · TypeScript · Supabase (Postgres + Auth + Storage) ·
-Tailwind CSS · Vercel · PayPesa (payment abstraction)
+Tailwind CSS · Vercel · DPO Pay by Network (payment abstraction)
 
 ## Design system
 
@@ -186,9 +193,9 @@ at a glance, plus:
 - **The payment return URL is never derived from the request** (i.e. never
   `request.nextUrl.origin` / the `Host` header) — only from the
   server-configured `NEXT_PUBLIC_SITE_URL`, so a spoofed Host header can't
-  redirect customers or PayPesa's webhook callback to another domain.
+  redirect customers or the payment provider's callback to another domain.
 - **Secrets hygiene**: `.gitignore` blocks every `.env*` variant except
-  `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` and all `PAYPESA_*` secrets are
+  `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` and all `DPO_*` secrets are
   read only in server-only modules (enforced by the `server-only` package).
 
 **Before your first deploy**, verify secrets actually won't be committed:
@@ -234,7 +241,7 @@ checkout, admin — as part of setup, not optional polish.
 Being upfront about what this scaffold does *not* do yet, rather than
 papering over it:
 
-- **PayPesa integration is unconfirmed** — see above. This is the single
+- **DPO Pay integration is wired for the documented API flow but requires your DPO merchant credentials and an end-to-end sandbox test** — see above. This is the single
   most important thing to resolve before accepting real payments.
 - **Tax calculation isn't wired up** — `orders.tax_amount` exists but is
   always `0` today. Needs an accountant's input before automating (see
