@@ -1,9 +1,9 @@
 import 'server-only';
 import type { PaymentProvider } from './PaymentProvider';
-import { DPOProvider } from './DPOProvider';
+import { DPOPayProvider } from './DPOPayProvider';
 
 export function getPaymentProvider(): PaymentProvider {
-  return new DPOProvider();
+  return new DPOPayProvider();
 }
 
 export * from './PaymentProvider';

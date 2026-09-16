@@ -1,8 +1,8 @@
 /**
  * Payment provider abstraction.
  *
- * Checkout (`app/api/checkout/route.ts`) and the webhook handler
- * (`app/api/webhooks/dpo/route.ts`) depend ONLY on this interface —
+ * Checkout (`app/api/checkout/route.ts`) and the payment routes
+ * (`app/api/webhooks/paypesa/route.ts`) depend ONLY on this interface —
  * never on a specific provider's request/response shape. That means
  * swapping or adding a payment provider later never touches order logic.
  */
@@ -36,15 +36,30 @@ export interface WebhookVerificationResult {
   providerEventId: string;
   eventType: string;
   /** Maps back to our order — must equal `orders.order_number` or
-   * `orders.id`; the webhook handler rejects anything that doesn't. */
+   * `orders.id`; the payment routes rejects anything that doesn't. */
   orderReference: string | null;
   amount: number | null;
   currency: string | null;
   status: 'paid' | 'failed' | 'cancelled' | 'unknown';
 }
 
+export interface PaymentConfirmation {
+  valid: boolean;
+  status: 'paid' | 'failed' | 'cancelled' | 'pending' | 'unknown';
+  providerReference: string | null;
+  amount: number | null;
+  currency: string | null;
+  message?: string;
+}
+
 export interface PaymentProvider {
   createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
+  confirmPayment(params: {
+    providerReference?: string | null;
+    orderNumber: string;
+    amount: number;
+    currency: string;
+  }): Promise<PaymentConfirmation>;
   /**
    * @param rawBody The exact, unparsed request body bytes/string. Signature
    * verification MUST run against the raw body, not a re-serialized JSON

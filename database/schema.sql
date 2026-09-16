@@ -370,7 +370,7 @@ create table if not exists orders (
   payment_status payment_status not null default 'pending_payment',
   fulfillment_status fulfillment_status not null default 'unfulfilled',
 
-  payment_provider text not null default 'dpo',
+  payment_provider text not null default 'dpo_pay',
   payment_reference text,           -- provider transaction/reference id
   tracking_number text,
   tracking_carrier text,
@@ -412,8 +412,8 @@ create index if not exists idx_order_items_order on order_items (order_id);
 create table if not exists payment_events (
   id uuid primary key default gen_random_uuid(),
   order_id uuid references orders(id) on delete set null,
-  provider text not null default 'dpo',
-  provider_event_id text not null,   -- unique DPO transaction/callback reference
+  provider text not null default 'dpo_pay',
+  provider_event_id text not null,   -- unique provider event id when a webhook/event flow is used
   event_type text not null,
   amount numeric(10, 2),
   currency text,
