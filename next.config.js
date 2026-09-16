@@ -45,19 +45,10 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Applies to every route. CSP is added separately per-request by
+        // middleware.ts; admin routes get additional session gating there too.
         source: '/:path*',
         headers: securityHeaders,
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, max-age=0' },
-          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
-        ],
-      },
-      {
-        source: '/admin/:path*',
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
       },
     ];
   },
