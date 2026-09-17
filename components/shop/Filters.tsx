@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { Category } from '@/types';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+type FilterCategory = Pick<Category, 'id' | 'name' | 'slug'>;
 
 interface FiltersProps {
-  categories: Category[];
+  categories: FilterCategory[];
 }
 
 export function Filters({ categories }: FiltersProps) {

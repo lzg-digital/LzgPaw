@@ -260,3 +260,15 @@ papering over it:
 - **No automated tests** — none were in scope for this pass; given the
   amount of money-and-data-handling logic in `app/api/checkout` and
   `app/api/webhooks`, that's the highest-value place to start.
+
+
+## Cloudflare Workers Builds
+
+This is a full-stack Next.js app. Deploy it as a **Cloudflare Worker**, not as a static Pages export.
+
+Recommended Workers Build settings:
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+- Root directory: `/`
+
+The `build` script runs `opennextjs-cloudflare build`, which produces `.open-next/worker.js` and `.open-next/assets` for Wrangler.
