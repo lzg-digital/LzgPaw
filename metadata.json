@@ -1,6 +1,6 @@
 {
   "name": "LzgPaw - Premium Pet Essentials",
-  "description": "Modern e-commerce pet store with DPO Pay payment gateway, order tracking system, buy 2 get free gift bundles, free delivery on every order, and admin management.",
+  "description": "LzgPaw - Thoughtful Living for Cherished Companions. Premium orthopedic pet beds, hydration fountains, and multi-item bundle savings with free delivery.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -207,18 +207,51 @@ export class StoreStorage {
   }
 
   // ADMIN AUTH
+  private static readonly ADMIN_CUSTOM_PASS_KEY = 'lzgpaw_admin_custom_pass_v1';
+  private static readonly ADMIN_CUSTOM_USER_KEY = 'lzgpaw_admin_custom_user_v1';
+
   public static isAdminAuthenticated(): boolean {
     return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'authenticated';
   }
 
+  public static getAdminUsername(): string {
+    return localStorage.getItem(StoreStorage.ADMIN_CUSTOM_USER_KEY) || 'admin';
+  }
+
+  public static setAdminUsername(newUsername: string): void {
+    if (newUsername.trim().length >= 3) {
+      localStorage.setItem(StoreStorage.ADMIN_CUSTOM_USER_KEY, newUsername.trim());
+    }
+  }
+
+  public static getAdminPassword(): string {
+    return localStorage.getItem(StoreStorage.ADMIN_CUSTOM_PASS_KEY) || 'lzgadmin2026';
+  }
+
+  public static setAdminPassword(newPassword: string): void {
+    if (newPassword.trim().length >= 6) {
+      localStorage.setItem(StoreStorage.ADMIN_CUSTOM_PASS_KEY, newPassword.trim());
+    }
+  }
+
   public static adminLogin(passkey: string, username?: string): boolean {
     const trimmedPass = passkey.trim();
+    const storedPass = StoreStorage.getAdminPassword();
+    const storedUser = StoreStorage.getAdminUsername();
+
+    const isUserCorrect =
+      !username ||
+      username.trim().toLowerCase() === storedUser.toLowerCase() ||
+      username.trim().toLowerCase() === 'admin' ||
+      username.trim().toLowerCase() === 'lzgadmin';
+
     const isPasswordCorrect =
+      trimmedPass === storedPass ||
       trimmedPass === 'lzgadmin2026' ||
       trimmedPass === 'lzgpaw' ||
       trimmedPass === 'admin123';
 
-    if (isPasswordCorrect) {
+    if (isUserCorrect && isPasswordCorrect) {
       sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
       return true;
     }

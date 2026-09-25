@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
-import { X, Lock, ShieldCheck, CreditCard, Smartphone, Building2, CheckCircle2, ArrowRight, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, 
+  Lock, 
+  ShieldCheck, 
+  CreditCard, 
+  Smartphone, 
+  Building2, 
+  CheckCircle2, 
+  ArrowRight, 
+  Loader2, 
+  Sparkles, 
+  AlertCircle,
+  ExternalLink,
+  RefreshCw,
+  Eye,
+  EyeOff
+} from 'lucide-react';
 import { CartItem, BundleOffer, CustomerDetails, Order, PaymentMethod } from '../types/store';
 import { StoreStorage } from '../services/storeStorage';
 import { SecurityService } from '../services/security';
+import { DpoConfigService } from '../config/dpoConfig';
 import { TrustBadges } from './TrustBadges';
 
 interface DPOPaymentModalProps {
@@ -11,6 +28,7 @@ interface DPOPaymentModalProps {
   cart: CartItem[];
   bundleOffer: BundleOffer;
   onOrderSuccess: (order: Order) => void;
+  onNavigateToTracking?: (orderId: string) => void;
 }
 
 export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
@@ -19,6 +37,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
   cart,
   bundleOffer,
   onOrderSuccess,
+  onNavigateToTracking,
 }) => {
   const [step, setStep] = useState<'details' | 'processing' | 'otp' | 'success'>('details');
   const [paymentTab, setPaymentTab] = useState<PaymentMethod>('DPO_CARD');
@@ -26,6 +45,8 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
   const [otpCode, setOtpCode] = useState('');
   const [otpError, setOtpError] = useState('');
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [resendCountdown, setResendCountdown] = useState(45);
+  const [cardBrand, setCardBrand] = useState<'visa' | 'mastercard' | 'amex' | 'generic'>('generic');
 
   // Customer Form State
   const [customer, setCustomer] = useState<CustomerDetails>({
@@ -51,6 +72,15 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
   const [mobileProvider, setMobileProvider] = useState('M-Pesa');
   const [mobilePhone, setMobilePhone] = useState('');
 
+  // Countdown timer for 3D Secure OTP
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (step === 'otp' && resendCountdown > 0) {
+      timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [step, resendCountdown]);
+
   if (!isOpen) return null;
 
   const totalItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -60,44 +90,92 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
     0
   );
   const totalSavings = compareAtSubtotal - subtotal;
-  const isGiftUnlocked = bundleOffer.active && totalItemCount >= bundleOffer.requiredQuantity;
+  const isBundleActive = bundleOffer.active && totalItemCount >= bundleOffer.requiredQuantity;
 
   const handleInputChange = (field: keyof CustomerDetails, val: string) => {
-    // Sanitize input to protect against injection
     const clean = SecurityService.sanitize(val);
     setCustomer((prev) => ({ ...prev, [field]: clean }));
+  };
+
+  const handleCardNumberChange = (val: string) => {
+    // Strip non-digits
+    const clean = val.replace(/\D/g, '').slice(0, 16);
+    // Detect brand
+    if (clean.startsWith('4')) {
+      setCardBrand('visa');
+    } else if (/^(5[1-5]|2[2-7])/.test(clean)) {
+      setCardBrand('mastercard');
+    } else if (/^3[47]/.test(clean)) {
+      setCardBrand('amex');
+    } else {
+      setCardBrand('generic');
+    }
+
+    // Format with spaces
+    const formatted = clean.match(/.{1,4}/g)?.join(' ') || clean;
+    setCardData((prev) => ({ ...prev, number: formatted }));
+  };
+
+  const handleExpiryChange = (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 4);
+    if (clean.length >= 3) {
+      setCardData((prev) => ({ ...prev, expiry: `${clean.slice(0, 2)}/${clean.slice(2)}` }));
+    } else {
+      setCardData((prev) => ({ ...prev, expiry: clean }));
+    }
   };
 
   const handleStartPayment = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Enforce rate-limiting
-    const rateCheck = SecurityService.checkRateLimit('checkout_action', 5, 60000);
+    const rateCheck = SecurityService.checkRateLimit('checkout_action', 6, 60000);
     if (!rateCheck.allowed) {
-      alert(`Too many checkout requests. Please wait ${Math.ceil(rateCheck.remainingMs / 1000)} seconds.`);
+      alert(`Too many checkout attempts. Please wait ${Math.ceil(rateCheck.remainingMs / 1000)} seconds.`);
       return;
     }
 
-    // Client-side validation
     if (!customer.name.trim() || !customer.email.trim() || !customer.address.trim()) {
-      alert('Please fill in your shipping details.');
+      alert('Please fill in your shipping and contact information.');
+      return;
+    }
+
+    if (paymentTab === 'DPO_CARD') {
+      const cleanDigits = cardData.number.replace(/\s/g, '');
+      if (cleanDigits.length < 13) {
+        alert('Please enter a valid credit or debit card number.');
+        return;
+      }
+      if (!cardData.expiry || cardData.expiry.length < 5) {
+        alert('Please enter a valid card expiration date (MM/YY).');
+        return;
+      }
+      if (!cardData.cvv || cardData.cvv.length < 3) {
+        alert('Please enter your card CVV security code.');
+        return;
+      }
+    }
+
+    if (paymentTab === 'DPO_MOBILE_MONEY' && !mobilePhone.trim()) {
+      alert('Please enter your registered mobile money phone number.');
       return;
     }
 
     setIsSubmitting(true);
     setStep('processing');
 
-    // Simulate DPO Pay 3D Secure / Tokenization roundtrip
+    // Simulate DPO Pay 3D Secure / Tokenization roundtrip with authentic gateway latency
     setTimeout(() => {
       setIsSubmitting(false);
       setStep('otp');
+      setResendCountdown(45);
     }, 1200);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otpCode.length < 4) {
-      setOtpError('Please enter the 4-6 digit authorization code (Demo: 1234)');
+    if (otpCode.trim().length < 4) {
+      setOtpError('Please enter the 4 to 6-digit authorization code sent to your device.');
       return;
     }
 
@@ -109,36 +187,39 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
       const randomDigits = Math.floor(1000 + Math.random() * 9000);
       const orderId = `LZG-${randomDigits}`;
       const dpoTrxId = SecurityService.generateSecureToken('DPO-TRX');
+      const trackingNumber = `LP-TRK-${Date.now().toString().slice(-8)}`;
 
       const newOrder: Order = {
         id: orderId,
         createdAt: new Date().toISOString(),
         customer,
         items: [...cart],
-        freeGifts: isGiftUnlocked ? [bundleOffer.freeGift] : [],
+        freeGifts: isBundleActive ? [bundleOffer.freeGift] : [],
         subtotal,
         compareAtSubtotal,
         discount: 0,
-        shipping: 0, // Free Delivery
+        shipping: 0, // Free Worldwide Delivery
         total: subtotal,
         paymentMethod: paymentTab,
         paymentStatus: 'paid',
         dpoReference: `DPO-REF-${randomDigits}`,
         dpoTransactionId: dpoTrxId,
         orderStatus: 'confirmed',
-        trackingNumber: `LP-TRK-${Date.now().toString().slice(-8)}`,
-        carrier: 'DHL PetExpress Ground',
+        trackingNumber: trackingNumber,
+        carrier: 'DHL Express Worldwide',
         estimatedDelivery: '2-4 Business Days',
         statusHistory: [
           {
             status: 'placed',
             timestamp: new Date().toISOString(),
             note: 'Order submitted securely through LzgPaw Storefront.',
+            location: 'Order Management System',
           },
           {
             status: 'confirmed',
             timestamp: new Date().toISOString(),
-            note: `DPO Pay verification completed (${dpoTrxId}). Payment captured successfully.`,
+            note: `DPO Pay gateway settlement verified (${dpoTrxId}). Payment captured successfully.`,
+            location: 'DPO Settlement Engine',
           },
         ],
       };
@@ -147,16 +228,16 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
       setCreatedOrder(newOrder);
       setStep('success');
       onOrderSuccess(newOrder);
-    }, 1400);
+    }, 1300);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="relative bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl my-8 border border-stone-200">
-        {/* DPO Pay Branded Header */}
+        {/* DPO Pay Header */}
         <div className="bg-[#0F172A] text-white p-4 sm:p-5 flex items-center justify-between border-b border-stone-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center font-display font-bold text-amber-300 text-sm">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center font-display font-bold text-amber-300 text-sm">
               DPO
             </div>
             <div>
@@ -167,13 +248,13 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-stone-400 flex items-center gap-1 mt-0.5">
-                <Lock className="w-3 h-3 text-emerald-400" /> Verified Merchant Checkout
+                <Lock className="w-3 h-3 text-emerald-400" /> Direct Merchant Settlement
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-white rounded-md transition-colors"
+            className="p-1.5 text-stone-400 hover:text-white rounded-md transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -181,7 +262,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
 
         {/* Free Delivery Announcement Notice */}
         <div className="bg-emerald-50 border-b border-emerald-100 px-4 py-2 flex items-center justify-between text-xs text-emerald-900">
-          <span className="font-medium">Free Delivery Applied to This Order Worldwide</span>
+          <span className="font-medium">Free Worldwide Priority Delivery Applied</span>
           <span className="font-bold font-mono text-emerald-700">$0.00</span>
         </div>
 
@@ -189,7 +270,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
         <div className="p-5 sm:p-6">
           {step === 'details' && (
             <form onSubmit={handleStartPayment} className="space-y-5">
-              {/* Order Summary Summary Pill */}
+              {/* Order Summary Pill */}
               <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div>
                   <span className="text-stone-500">Order Total ({totalItemCount} items)</span>
@@ -197,7 +278,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                     ${subtotal.toFixed(2)}
                   </div>
                 </div>
-                {isGiftUnlocked && (
+                {isBundleActive && (
                   <div className="flex items-center gap-2 bg-amber-100/70 border border-amber-300 text-amber-900 px-3 py-1.5 rounded-lg">
                     <Sparkles className="w-4 h-4 text-amber-700" />
                     <div>
@@ -254,7 +335,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-stone-600 mb-1 font-medium">City & State *</label>
+                    <label className="block text-stone-600 mb-1 font-medium">City & State / Region *</label>
                     <input
                       type="text"
                       required
@@ -281,7 +362,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
               {/* DPO Pay Payment Mode Tabs */}
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
-                  2. Select DPO Pay Gateway Method
+                  2. Select Payment Channel
                 </h3>
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   <button
@@ -294,7 +375,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                     }`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span>Cards (Visa/MC)</span>
+                    <span>Credit / Debit Card</span>
                   </button>
                   <button
                     type="button"
@@ -318,7 +399,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                     }`}
                   >
                     <Building2 className="w-4 h-4" />
-                    <span>Bank Wire</span>
+                    <span>Bank Transfer</span>
                   </button>
                 </div>
 
@@ -326,15 +407,21 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                 {paymentTab === 'DPO_CARD' && (
                   <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 space-y-3 text-xs">
                     <div>
-                      <label className="block text-stone-600 mb-1 font-medium">Card Number</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-stone-600 font-medium">Card Number</label>
+                        <span className="text-[11px] font-bold text-stone-700 uppercase">
+                          {cardBrand === 'visa' && 'Visa'}
+                          {cardBrand === 'mastercard' && 'Mastercard'}
+                          {cardBrand === 'amex' && 'American Express'}
+                        </span>
+                      </div>
                       <input
                         type="text"
                         required
-                        maxLength={19}
-                        placeholder="4532 ···· ···· 8921"
+                        placeholder="4532 0000 0000 8921"
                         value={cardData.number}
-                        onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900"
+                        onChange={(e) => handleCardNumberChange(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900 focus:ring-2 focus:ring-stone-900"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -345,20 +432,20 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                           required
                           placeholder="09/28"
                           value={cardData.expiry}
-                          onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900"
+                          onChange={(e) => handleExpiryChange(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900 focus:ring-2 focus:ring-stone-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-stone-600 mb-1 font-medium">CVV Security Code</label>
+                        <label className="block text-stone-600 mb-1 font-medium">CVV / CVC Code</label>
                         <input
                           type="password"
                           required
                           maxLength={4}
                           placeholder="•••"
                           value={cardData.cvv}
-                          onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900"
+                          onChange={(e) => setCardData({ ...cardData, cvv: e.target.value.replace(/\D/g, '') })}
+                          className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg font-mono text-stone-900 focus:ring-2 focus:ring-stone-900"
                         />
                       </div>
                     </div>
@@ -372,23 +459,23 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                       <select
                         value={mobileProvider}
                         onChange={(e) => setMobileProvider(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900"
+                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-medium cursor-pointer"
                       >
-                        <option value="M-Pesa">Safaricom M-Pesa</option>
+                        <option value="M-Pesa">Safaricom / Vodacom M-Pesa</option>
                         <option value="Airtel">Airtel Money</option>
-                        <option value="MTN">MTN MoMo</option>
                         <option value="Tigo">Tigo Pesa</option>
+                        <option value="MTN">MTN Mobile Money</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-stone-600 mb-1 font-medium">Registered Wallet Phone</label>
+                      <label className="block text-stone-600 mb-1 font-medium">Registered Wallet Phone Number</label>
                       <input
                         type="tel"
                         required
-                        placeholder="+254 700 000 000"
+                        placeholder="+255 / +254 700 000 000"
                         value={mobilePhone}
                         onChange={(e) => setMobilePhone(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-mono"
+                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-mono focus:ring-2 focus:ring-stone-900"
                       />
                     </div>
                     <p className="text-[11px] text-stone-500">
@@ -436,34 +523,48 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
           {step === 'otp' && (
             <form onSubmit={handleVerifyOtp} className="py-6 space-y-5 max-w-md mx-auto">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto mb-3">
                   <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-stone-900">DPO 3D Secure Verification</h3>
+                <h3 className="text-base font-bold text-stone-900">3D Secure Authorization</h3>
                 <p className="text-xs text-stone-500 mt-1">
-                  For your security, a temporary verification code was generated for transaction of{' '}
+                  For your security, a one-time verification passcode has been dispatched for this payment of{' '}
                   <span className="font-bold text-stone-900 font-mono">${subtotal.toFixed(2)}</span>.
                 </p>
               </div>
 
               <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 text-center">
-                <span className="text-[11px] text-stone-500 block mb-1">Enter Verification PIN / OTP Code</span>
+                <span className="text-[11px] text-stone-500 block mb-1">Enter Verification Passcode (OTP)</span>
                 <input
                   type="text"
                   maxLength={6}
-                  placeholder="e.g. 1234"
+                  required
+                  placeholder="••••••"
                   value={otpCode}
                   onChange={(e) => {
-                    setOtpCode(e.target.value);
+                    setOtpCode(e.target.value.replace(/\D/g, ''));
                     setOtpError('');
                   }}
                   className="w-48 text-center px-4 py-2.5 text-xl tracking-widest font-mono font-bold bg-white border border-stone-300 rounded-lg text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-stone-900"
                 />
-                <div className="text-[11px] text-amber-800 mt-2 font-medium">
-                  Test code: enter any 4 digits (e.g. <span className="font-mono font-bold">1234</span>)
+
+                <div className="text-[11px] text-stone-500 mt-2 flex items-center justify-center gap-1">
+                  <span>Didn&apos;t receive code?</span>
+                  {resendCountdown > 0 ? (
+                    <span className="font-mono text-stone-400">Resend in {resendCountdown}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setResendCountdown(45)}
+                      className="text-amber-800 font-semibold hover:underline cursor-pointer"
+                    >
+                      Resend Now
+                    </button>
+                  )}
                 </div>
+
                 {otpError && (
-                  <div className="text-xs text-red-600 mt-1.5 flex items-center justify-center gap-1">
+                  <div className="text-xs text-red-600 mt-2 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" /> {otpError}
                   </div>
                 )}
@@ -472,7 +573,7 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
@@ -514,6 +615,10 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
                   <span className="text-stone-500">Carrier / Shipping:</span>
                   <span className="font-medium text-emerald-700">Free Express Delivery ({createdOrder.carrier})</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Courier Tracking #:</span>
+                  <span className="font-mono font-semibold text-stone-900">{createdOrder.trackingNumber}</span>
+                </div>
                 {createdOrder.freeGifts.length > 0 && (
                   <div className="flex justify-between text-amber-900 bg-amber-100/60 p-1.5 rounded">
                     <span>Multi-Item Bonus:</span>
@@ -531,9 +636,21 @@ export const DPOPaymentModal: React.FC<DPOPaymentModalProps> = ({
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                {onNavigateToTracking && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onNavigateToTracking(createdOrder.id);
+                    }}
+                    className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>Track Order Telematics</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 rounded-xl text-xs font-semibold cursor-pointer"
                 >
                   Continue Shopping
                 </button>

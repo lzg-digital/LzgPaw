@@ -36,11 +36,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <img
           src={product.image}
           alt={product.name}
+          loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
-            // Elegant fallback if an external image url is delayed
-            (e.target as HTMLImageElement).src = '/src/assets/images/product_orthopedic_bed_1790283966759.jpg';
+            // Elegant fallback if image fails
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1541599540903-216a46ca1dc0?auto=format&fit=crop&w=600&q=80';
           }}
         />
 
@@ -51,10 +53,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
-        {/* Free Gift Eligible Marker */}
+        {/* Multi-Item Bundle Eligible Marker */}
         {product.isBundleEligible && (
           <div className="absolute top-3 right-3 bg-amber-500/90 backdrop-blur-xs text-stone-950 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-xs">
-            Gift Eligible
+            Save on 2+
           </div>
         )}
       </div>

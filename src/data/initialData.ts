@@ -333,7 +333,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'What is your return & happiness guarantee policy?',
-    a: 'We offer a 30-Day Happiness Guarantee. If your furry companion does not completely fall in love with any LzgPaw product, simply contact our team at ricopack0117@gmail.coma or via Instagram @lzgpaw for a hassle-free exchange or full refund.',
+    a: 'We offer a 30-Day Happiness Guarantee. If your furry companion does not completely fall in love with any LzgPaw product, simply contact our team at ricopack0117@gmail.com or via Instagram @lzgpaw for a hassle-free exchange or full refund.',
   },
   {
     q: 'Are your pet products veterinarian vetted and non-toxic?',

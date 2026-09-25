@@ -10,6 +10,7 @@ import { TrackingPage } from './components/TrackingPage';
 import { FAQSPage } from './components/FAQSPage';
 import { AboutPage } from './components/AboutPage';
 import { ContactPage } from './components/ContactPage';
+import { TermsPrivacyPage } from './components/TermsPrivacyPage';
 import { AdminPortal } from './components/AdminPortal';
 import { NotificationDrawer } from './components/NotificationDrawer';
 import { Footer } from './components/Footer';
@@ -117,12 +118,12 @@ export default function App() {
     StoreStorage.saveCart(updatedCart);
     setIsCartOpen(true);
 
-    // Check if free gift was just unlocked!
+    // Check if multi-item bundle was activated!
     const totalItems = updatedCart.reduce((sum, i) => sum + i.quantity, 0);
     if (bundleOffer.active && totalItems === bundleOffer.requiredQuantity) {
       NotificationService.sendPushNotification(
-        '🎁 Free Gift Unlocked in Your Bag!',
-        `You added ${totalItems} items! The ${bundleOffer.freeGift.name} ($22 Value) is now included for $0.00.`
+        '✨ Multi-Item Savings Activated in Your Bag!',
+        `You added ${totalItems} items! Your multi-item bundle savings and bonus companion pack are now included.`
       );
     }
   };
@@ -440,7 +441,7 @@ export default function App() {
                     Bundle Eligible Products
                   </h2>
                   <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-                    Select any 2 items below to automatically unlock your Free Deluxe Paw Balm ($22 Value).
+                    Select any 2 or more eligible items below to automatically activate multi-item bundle savings.
                   </p>
                 </div>
                 <button
@@ -496,6 +497,11 @@ export default function App() {
           />
         )}
 
+        {/* VIEW: TERMS & PRIVACY */}
+        {currentView === 'terms-privacy' && (
+          <TermsPrivacyPage onNavigateToContact={() => setCurrentView('contact')} />
+        )}
+
         {/* VIEW: ADMIN */}
         {currentView === 'admin' && (
           <AdminPortal
@@ -525,6 +531,7 @@ export default function App() {
         cart={cart}
         bundleOffer={bundleOffer}
         onOrderSuccess={handleOrderSuccess}
+        onNavigateToTracking={handleTrackSpecificOrder}
       />
 
       {/* Product Detail Modal */}

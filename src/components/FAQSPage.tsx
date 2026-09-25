@@ -20,7 +20,7 @@ export const FAQSPage: React.FC<FAQSPageProps> = ({ onNavigateToContact }) => {
           Frequently Asked Questions
         </h1>
         <p className="text-sm text-stone-600 mt-2">
-          Everything you need to know about our pet essentials, DPO Pay security, free delivery worldwide, and the Buy 2 Free Gift bundle.
+          Everything you need to know about our pet essentials, secure payments, free delivery worldwide, and multi-item bundle savings.
         </p>
       </div>
 
@@ -82,7 +82,7 @@ export const FAQSPage: React.FC<FAQSPageProps> = ({ onNavigateToContact }) => {
         <h3 className="text-base font-bold text-stone-900">Still have a question?</h3>
         <p className="text-xs text-stone-600 max-w-md mx-auto">
           We are always happy to help our pet parent community. Reach out to our direct email{' '}
-          <span className="font-mono font-semibold text-stone-900">ricopack0117@gmail.coma</span> or message us on Instagram{' '}
+          <span className="font-mono font-semibold text-stone-900">ricopack0117@gmail.com</span> or message us on Instagram{' '}
           <span className="font-semibold text-stone-900">@lzgpaw</span>.
         </p>
         <button

@@ -13,18 +13,17 @@ export class NotificationService {
           {
             id: 'notif-welcome',
             title: 'Welcome to LzgPaw! 🐾',
-            message: 'Enjoy Free Delivery on every order, plus Buy 2 and Get a Free Gift automatically!',
+            message: 'Enjoy Free Delivery on every order, plus Multi-Item Bundle Savings automatically applied at checkout.',
             timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
             read: false,
             type: 'promo',
           },
           {
-            id: 'notif-order-demo',
-            title: 'Order Dispatched · LZG-8492',
-            message: 'Your CloudSupport Bed and WhiskerCalm Fountain are in transit with DHL PetExpress!',
+            id: 'notif-order-priority',
+            title: 'Shipment Tracking Telemetry Active',
+            message: 'Your pet essentials are handled with priority care and full carrier tracking.',
             timestamp: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
             read: false,
-            orderId: 'LZG-8492',
             type: 'order',
           },
         ];

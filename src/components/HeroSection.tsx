@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Gift, Truck, ShieldCheck, Star } from 'lucide-react';
+import heroImgAsset from '../assets/images/hero_lzgpaw_pets_1790283953347.jpg';
 
 interface HeroSectionProps {
   onShopClick: () => void;
   onBundleClick: () => void;
 }
 
+const FALLBACK_HERO_IMAGE = 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=1400&q=85';
+
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onShopClick,
   onBundleClick,
 }) => {
+  const [imgSrc, setImgSrc] = useState<string>(heroImgAsset);
+
   return (
     <section className="relative overflow-hidden bg-[#FAF9F6] border-b border-stone-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
@@ -67,11 +72,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="lg:col-span-6 relative">
             <div className="relative aspect-16/10 sm:aspect-16/10 lg:aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border border-stone-200/90 bg-stone-100">
               <img
-                src="/src/assets/images/hero_lzgpaw_pets_1790283953347.jpg"
+                src={imgSrc}
                 alt="Happy golden retriever and British shorthair cat relaxing together"
-                className="w-full h-full object-cover object-center"
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-full object-cover object-center transition-all duration-300"
+                onError={() => {
+                  if (imgSrc !== FALLBACK_HERO_IMAGE) {
+                    setImgSrc(FALLBACK_HERO_IMAGE);
+                  }
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent pointer-events-none"></div>
 
               {/* Floating Value Card */}
               <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/60 shadow-xl max-w-xs text-xs">

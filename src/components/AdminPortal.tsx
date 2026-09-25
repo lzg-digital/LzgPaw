@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Package, DollarSign, Gift, Search, Trash2, Edit3, CheckCircle2, Lock, LogOut, ArrowRight, Truck, AlertTriangle, Sparkles, RefreshCw } from 'lucide-react';
+import { Shield, Plus, Package, DollarSign, Gift, Search, Trash2, Edit3, CheckCircle2, Lock, LogOut, ArrowRight, Truck, AlertTriangle, Sparkles, RefreshCw, Key, Settings, Globe, Check } from 'lucide-react';
 import { Product, Order, OrderStatus, BundleOffer, ProductCategory } from '../types/store';
 import { StoreStorage } from '../services/storeStorage';
+import { DpoConfigService, DpoApiCredentials } from '../config/dpoConfig';
 
 interface AdminPortalProps {
   onOrderUpdated?: (orderId: string) => void;
@@ -13,14 +14,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onNavigateToStore,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState(() => StoreStorage.getAdminUsername());
   const [passkey, setPasskey] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'bundle'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'bundle' | 'settings'>('orders');
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [bundleOffer, setBundleOffer] = useState<BundleOffer | null>(null);
+
+  // DPO Pay Configuration State
+  const [dpoConfig, setDpoConfig] = useState<DpoApiCredentials>(DpoConfigService.getCredentials());
+  const [dpoSaveMsg, setDpoSaveMsg] = useState('');
+
+  // Admin Credentials Change State
+  const [adminUsernameEdit, setAdminUsernameEdit] = useState(() => StoreStorage.getAdminUsername());
+  const [newMasterPassword, setNewMasterPassword] = useState('');
+  const [confirmMasterPassword, setConfirmMasterPassword] = useState('');
+  const [passwordMsg, setPasswordMsg] = useState('');
 
   // Search & Filter
   const [orderSearch, setOrderSearch] = useState('');
@@ -62,7 +73,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       setAuthError('');
       loadData();
     } else {
-      setAuthError('Invalid Admin Credentials. (Password: lzgadmin2026)');
+      setAuthError('Invalid Admin Credentials. Please verify your username and master password.');
     }
   };
 
@@ -219,9 +230,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 }}
                 className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-sm focus:ring-2 focus:ring-stone-900 font-mono"
               />
-              <p className="text-[11px] text-stone-400 mt-1.5">
-                Default Access Password: <span className="font-mono font-bold text-stone-700">lzgadmin2026</span>
-              </p>
             </div>
 
             {authError && (
@@ -358,18 +366,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
           <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Free Gifts Awarded</span>
+            <span>Bundle Perks Awarded</span>
             <Gift className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-stone-900 mt-1">
             {totalFreeGiftsAwarded}
           </div>
-          <span className="text-[11px] text-amber-800 font-medium">Buy 2 Deal Conversions</span>
+          <span className="text-[11px] text-amber-800 font-medium">Multi-Item Orders</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 pb-2">
         <button
           onClick={() => setActiveTab('orders')}
           className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
@@ -398,7 +406,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
           }`}
         >
-          Buy 2 Gift Offer Rules
+          Multi-Item Bundle Rules
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'settings'
+              ? 'bg-stone-900 text-white'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+          }`}
+        >
+          <Key className="w-3.5 h-3.5" />
+          <span>DPO Pay API Keys & Admin Passkey</span>
         </button>
       </div>
 
@@ -612,13 +631,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Gift className="w-5 h-5 text-amber-700" />
+                <Sparkles className="w-5 h-5 text-amber-700" />
                 <h3 className="font-display font-bold text-base text-stone-900">
-                  &quot;Buy 2 & Get a Free Gift&quot; Bundle Offer
+                  Multi-Item Bundle Offer & Bonus Perks
                 </h3>
               </div>
               <p className="text-xs text-stone-500 mt-1">
-                When customers add 2 or more products to their cart, this complimentary gift is automatically dropped into checkout with $0 charge.
+                When customers add 2 or more products to their cart, multi-item savings and a companion care perk are automatically activated at checkout.
               </p>
             </div>
             <button
@@ -635,7 +654,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
           <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 space-y-3 text-xs">
             <div>
-              <label className="block text-stone-600 mb-1 font-medium">Free Gift Title</label>
+              <label className="block text-stone-600 mb-1 font-medium">Bonus Perk Title</label>
               <input
                 type="text"
                 value={bundleOffer.freeGift.name}
@@ -652,7 +671,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
 
             <div>
-              <label className="block text-stone-600 mb-1 font-medium">Gift Description</label>
+              <label className="block text-stone-600 mb-1 font-medium">Perk Description</label>
               <input
                 type="text"
                 value={bundleOffer.freeGift.description}
@@ -670,23 +689,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-stone-600 mb-1 font-medium">Retail Value ($)</label>
-                <input
-                  type="number"
-                  value={bundleOffer.freeGift.value}
-                  onChange={(e) => {
-                    const updated = {
-                      ...bundleOffer,
-                      freeGift: { ...bundleOffer.freeGift, value: Number(e.target.value) },
-                    };
-                    StoreStorage.saveBundleOffer(updated);
-                    setBundleOffer(updated);
-                  }}
-                  className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-stone-600 mb-1 font-medium">Items Required</label>
+                <label className="block text-stone-600 mb-1 font-medium">Items Required to Unlock</label>
                 <input
                   type="number"
                   value={bundleOffer.requiredQuantity}
@@ -701,7 +704,272 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-mono"
                 />
               </div>
+              <div>
+                <label className="block text-stone-600 mb-1 font-medium">Bonus Value Attribution ($)</label>
+                <input
+                  type="number"
+                  value={bundleOffer.freeGift.value}
+                  onChange={(e) => {
+                    const updated = {
+                      ...bundleOffer,
+                      freeGift: { ...bundleOffer.freeGift, value: Number(e.target.value) },
+                    };
+                    StoreStorage.saveBundleOffer(updated);
+                    setBundleOffer(updated);
+                  }}
+                  className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-stone-900 font-mono"
+                />
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: DPO PAY API KEYS & ADMIN SECURITY */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6 max-w-3xl">
+          {/* DPO Pay API Key Management */}
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-stone-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Key className="w-5 h-5 text-amber-800" />
+                  <h3 className="font-display font-bold text-base text-stone-900">
+                    DPO Pay (Direct Pay Online) API Configuration
+                  </h3>
+                </div>
+                <p className="text-xs text-stone-500 mt-1">
+                  Weka hapa Company Token na Service Type ulizopokea kutoka kwa DPO Pay ili kupokea malipo moja kwa moja.
+                </p>
+              </div>
+              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                dpoConfig.environment === 'production' 
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                  : 'bg-amber-100 text-amber-900 border border-amber-300'
+              }`}>
+                {dpoConfig.environment} Mode
+              </span>
+            </div>
+
+            {dpoSaveMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{dpoSaveMsg}</span>
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                DpoConfigService.saveCredentials(dpoConfig);
+                setDpoSaveMsg('✓ DPO Pay API Credentials saved successfully! Ready for checkout tokenization.');
+                setTimeout(() => setDpoSaveMsg(''), 4000);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">
+                    Environment (Hali ya Gateway)
+                  </label>
+                  <select
+                    value={dpoConfig.environment}
+                    onChange={(e) => setDpoConfig({ ...dpoConfig, environment: e.target.value as any })}
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-medium cursor-pointer"
+                  >
+                    <option value="sandbox">Sandbox (Majaribio / Testing)</option>
+                    <option value="production">Production (Mauzo Halisi / Live Sales)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">
+                    Default Currency (Sarafu)
+                  </label>
+                  <select
+                    value={dpoConfig.currency}
+                    onChange={(e) => setDpoConfig({ ...dpoConfig, currency: e.target.value })}
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-medium cursor-pointer"
+                  >
+                    <option value="USD">USD ($ - US Dollar)</option>
+                    <option value="TZS">TZS (Tanzanian Shilling)</option>
+                    <option value="KES">KES (Kenyan Shilling)</option>
+                    <option value="ZAR">ZAR (South African Rand)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  DPO Company Token *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Paste Company Token from DPO Group (e.g. 9F4164C9-C229-450F-BC9E-E2FB41775700)"
+                  value={dpoConfig.companyToken}
+                  onChange={(e) => setDpoConfig({ ...dpoConfig, companyToken: e.target.value.trim() })}
+                  className="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-mono text-xs focus:ring-2 focus:ring-stone-900"
+                />
+                <p className="text-[11px] text-stone-400 mt-1">
+                  Hii ni Token maalum unayopewa na DPO Pay baada ya akaunti ya merchant kuidhinishwa.
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  DPO Service Type Code *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 38549 or standard ecommerce service code"
+                  value={dpoConfig.serviceType}
+                  onChange={(e) => setDpoConfig({ ...dpoConfig, serviceType: e.target.value.trim() })}
+                  className="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-mono text-xs focus:ring-2 focus:ring-stone-900"
+                />
+                <p className="text-[11px] text-stone-400 mt-1">
+                  Service type code kwa ajili ya mauzo ya mtandaoni (Online Goods / Retail).
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save DPO API Settings</span>
+                </button>
+
+                <span className="text-[11px] text-stone-500">
+                  Settings are encrypted & saved securely in merchant storage.
+                </span>
+              </div>
+            </form>
+
+            {/* Documentation & File Guide */}
+            <div className="mt-4 p-4 bg-stone-50 rounded-xl border border-stone-200 text-xs space-y-2">
+              <h4 className="font-bold text-stone-900 flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-amber-800" />
+                <span>Mwongozo wa Kuweka API Keys kwenye Files (.env au Config):</span>
+              </h4>
+              <p className="text-stone-600 leading-relaxed">
+                Ukipenda kuweka funguo zako za DPO Pay kwenye files za msimbo badala ya hapa, unaweza kuziweka kwenye faili la <code className="bg-stone-200 px-1.5 py-0.5 rounded font-mono text-[11px]">.env</code> au <code className="bg-stone-200 px-1.5 py-0.5 rounded font-mono text-[11px]">src/config/dpoConfig.ts</code>:
+              </p>
+              <pre className="p-3 bg-stone-900 text-emerald-400 rounded-lg font-mono text-[11px] overflow-x-auto">
+{`# Weka kwenye faili la .env:
+VITE_DPO_COMPANY_TOKEN="COMPANY_TOKEN_YAKO_HAPA"
+VITE_DPO_SERVICE_TYPE="SERVICE_TYPE_YAKO_HAPA"
+VITE_DPO_ENV="production"`}
+              </pre>
+            </div>
+          </div>
+
+          {/* Change Admin Master Credentials (Username & Password) */}
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
+              <Lock className="w-5 h-5 text-stone-700" />
+              <div>
+                <h3 className="font-display font-bold text-base text-stone-900">
+                  Badilisha Taarifa za Kuingilia Admin (Username & Password)
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Unaweza kubadilisha Jina la Admin (Username) na Nenosiri (Master Password) wakati wowote kwa usalama wako.
+                </p>
+              </div>
+            </div>
+
+            {passwordMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{passwordMsg}</span>
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                
+                // Validate Username
+                if (adminUsernameEdit.trim().length < 3) {
+                  setPasswordMsg('Username lazima iwe na angalau herufi 3.');
+                  return;
+                }
+
+                // If password fields are filled, validate them
+                if (newMasterPassword) {
+                  if (newMasterPassword.length < 6) {
+                    setPasswordMsg('Nenosiri lazima liwe na angalau herufi au namba 6.');
+                    return;
+                  }
+                  if (newMasterPassword !== confirmMasterPassword) {
+                    setPasswordMsg('Nenosiri jipya na la kurudia hayalingani.');
+                    return;
+                  }
+                  StoreStorage.setAdminPassword(newMasterPassword);
+                }
+
+                StoreStorage.setAdminUsername(adminUsernameEdit.trim());
+                setUsername(adminUsernameEdit.trim());
+                setPasswordMsg('✓ Taarifa za Admin (Username & Password) zimehifadhiwa kikamilifu!');
+                setNewMasterPassword('');
+                setConfirmMasterPassword('');
+                setTimeout(() => setPasswordMsg(''), 4000);
+              }}
+              className="space-y-4 text-xs max-w-md"
+            >
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  Admin Username (Jina la Kuingilia) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. admin or pluziga"
+                  value={adminUsernameEdit}
+                  onChange={(e) => setAdminUsernameEdit(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-medium text-xs focus:ring-2 focus:ring-stone-900"
+                />
+                <p className="text-[11px] text-stone-400 mt-1">
+                  Hili ndilo jina utakalotumia unapoingia kwenye ukurasa huu wa Admin.
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  New Master Password (Nenosiri Jipya)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Weka nenosiri jipya (au acha tupu kubaki na la sasa)..."
+                  value={newMasterPassword}
+                  onChange={(e) => setNewMasterPassword(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-mono text-xs focus:ring-2 focus:ring-stone-900"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  Confirm New Password (Rudia Nenosiri Jipya)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Rudia nenosiri jipya..."
+                  value={confirmMasterPassword}
+                  onChange={(e) => setConfirmMasterPassword(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-stone-900 font-mono text-xs focus:ring-2 focus:ring-stone-900"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Save Admin Credentials</span>
+              </button>
+            </form>
           </div>
         </div>
       )}

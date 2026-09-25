@@ -51,10 +51,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                 <div>
                   <span className="text-stone-400 block text-[11px]">Direct Support Email</span>
                   <a
-                    href="mailto:ricopack0117@gmail.coma"
+                    href="mailto:ricopack0117@gmail.com"
                     className="font-mono font-semibold text-stone-900 hover:text-amber-800 transition-colors break-all"
                   >
-                    ricopack0117@gmail.coma
+                    ricopack0117@gmail.com
                   </a>
                   <p className="text-[11px] text-stone-500 mt-0.5">Replies typically within 2-4 hours</p>
                 </div>
